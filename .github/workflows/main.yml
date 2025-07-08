@@ -92,7 +92,7 @@ jobs:
       #  -Dsonar.externalIssuesReportPaths=gitleaks-report.sarif,pip-audit-report.sarif
         
       env:
-        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        SONAR_TOKEN: ${{ secrets.SONAR_HEALTH_TOKEN }}
         SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
     # - name: Run Trivy Vulnerability Scan
     #   run: |
