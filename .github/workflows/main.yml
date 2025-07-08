@@ -84,7 +84,7 @@ jobs:
       with:
         projectBaseDir: .
         args: > 
-          -Dsonar.projectKey=DjangoApp
+          -Dsonar.projectKey=healthCheck
           -Dsonar.python.bandit.reportPaths=bandit-report.json
           -Dsonar.dependencyCheck.jsonReportPath=dependency-check-report.json
           -Dsonar.python.coverage.reportPaths=coverage-report/cobertura.xml 
