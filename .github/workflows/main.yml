@@ -55,6 +55,33 @@ jobs:
           chmod +x gitleaks
           ./gitleaks detect --source . --report-format json --report-path gitleaks-report.json || true
 
+      - name: Convert Gitleaks report to SonarQube format
+        run: |
+          pip install jq
+          jq -c '.[]' gitleaks-report.json | while read -r issue; do
+            file=$(echo "$issue" | jq -r '.file')
+            rule_id=$(echo "$issue" | jq -r '.ruleID')
+            desc=$(echo "$issue" | jq -r '.description')
+            start_line=$(echo "$issue" | jq -r '.startLine // 1')
+            cat <<EOF
+            {
+              "engineId": "gitleaks",
+              "ruleId": "$rule_id",
+              "type": "VULNERABILITY",
+              "severity": "MAJOR",
+              "primaryLocation": {
+                "message": "$desc",
+                "filePath": "$file",
+                "textRange": {
+                  "startLine": $start_line,
+                  "endLine": $start_line
+                }
+              }
+            }
+            EOF
+                done | jq -s '.' > sonar-gitleaks-report.json
+
+
       # Run SonarQube Scan
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v5.2.0
