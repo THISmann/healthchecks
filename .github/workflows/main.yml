@@ -99,7 +99,7 @@ jobs:
     - name: Run Gitleaks
       uses: gitleaks/gitleaks-action@v2
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITLEAKS_TOKEN }}
       with:
         config-path: .gitleaks.toml  # Optional: Use a custom Gitleaks configuration
         output: gitleaks-report.json  # Specify JSON output for SonarQube
@@ -114,6 +114,7 @@ jobs:
           -Dsonar.python.bandit.reportPaths=bandit-report.json
           -Dsonar.dependencyCheck.jsonReportPath=dependency-check-report.json
           -Dsonar.python.coverage.reportPaths=coverage-report/cobertura.xml
+          -Dsonar.secretsDetection.reportPaths=gitleaks-report.json
           -X
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_HEALTH_TOKEN }}
@@ -126,4 +127,30 @@ jobs:
     #   # Adjust severity levels (e.g., MEDIUM,LOW) as needed.
 
 
-  
+  # name: Build
+
+  # on:
+  # push:
+  #   branches:
+  #     - main
+
+  #bonjour 
+
+  # jobs:
+  # build:
+  #   name: Build
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #       with:
+  #         fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+  #     - uses: sonarsource/sonarqube-scan-action@master
+  #       env:
+  #         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  #         SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+  #     # If you wish to fail your job when the Quality Gate is red, uncomment the
+  #     # following lines. This would typically be used to fail a deployment.
+  #     # - uses: sonarsource/sonarqube-quality-gate-action@master
+  #     #   timeout-minutes: 5
+  #     #   env:
+  #     #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
