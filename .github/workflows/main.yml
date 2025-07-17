@@ -98,13 +98,22 @@ jobs:
     # Run Gitleaks to detect secrets and generate a JSON report
     - name: Run Gitleaks
       run: |
+        echo "Downloading Gitleaks..."
         curl -sSL https://github.com/gitleaks/gitleaks/releases/latest/download/gitleaks-linux-amd64 -o gitleaks
         chmod +x gitleaks
+        echo "Running Gitleaks scan..."
         ./gitleaks detect --source . --report-format json --report-path gitleaks-report.json || true
+        echo "Checking generated files..."
+        ls -lah
+        cat gitleaks-report.json || echo "gitleaks-report.json not found or empty"
 
     - name: Convert Gitleaks report to SonarQube generic format
       run: |
         pip install jq
+        if [ ! -f "gitleaks-report.json" ]; then
+          echo "❌ gitleaks-report.json not found! Skipping conversion."
+          exit 1
+        fi
         jq -r '
           .[] | {
             engineId: "gitleaks",
@@ -121,6 +130,8 @@ jobs:
             }
           }
         ' gitleaks-report.json > sonar-gitleaks-report.json
+
+     
 
     - name: SonarQube Scan
       uses: SonarSource/sonarqube-scan-action@v5.2.0
