@@ -43,10 +43,12 @@ jobs:
           coverage report
 
       # Optional: Run coverage with pytest-cov if using pytest
-      - name: Run Coverage (pytest-cov)
+      - name: Run Coverage and Generate Cobertura XML
         run: |
           mkdir -p coverage-report
-          pytest --cov=. --cov-report=xml:coverage-report/cobertura.xml || true
+          coverage run manage.py test
+          coverage xml -o coverage-report/cobertura.xml
+
 
       # Run Gitleaks using the CLI (to generate JSON report)
       - name: Run Gitleaks
