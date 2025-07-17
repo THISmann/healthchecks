@@ -17,10 +17,10 @@ jobs:
           fetch-depth: 0
 
       # Set up Python (for Django + Bandit + coverage)
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v3
         with:
-          python-version: 3.10
+          python-version: ${{ matrix.python-version }}
 
       # Install dependencies
       - name: Install Dependencies
