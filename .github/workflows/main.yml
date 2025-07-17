@@ -55,31 +55,39 @@ jobs:
           chmod +x gitleaks
           ./gitleaks detect --source . --report-format json --report-path gitleaks-report.json || true
 
-      - name: Convert Gitleaks report to SonarQube format
+      - name: Convert Gitleaks report to SonarQube Generic Issue Format
         run: |
           pip install jq
           jq -c '.[]' gitleaks-report.json | while read -r issue; do
-            file=$(echo "$issue" | jq -r '.file')
-            rule_id=$(echo "$issue" | jq -r '.ruleID')
-            desc=$(echo "$issue" | jq -r '.description')
-            start_line=$(echo "$issue" | jq -r '.startLine // 1')
-            cat <<EOF
-            {
-              "engineId": "gitleaks",
-              "ruleId": "$rule_id",
-              "type": "VULNERABILITY",
-              "severity": "MAJOR",
-              "primaryLocation": {
-                "message": "$desc",
-                "filePath": "$file",
-                "textRange": {
-                  "startLine": $start_line,
-                  "endLine": $start_line
+            file=$(echo "$issue" | jq -r '.File')
+            rule_id=$(echo "$issue" | jq -r '.RuleID')
+            desc=$(echo "$issue" | jq -r '.Description')
+            start_line=$(echo "$issue" | jq -r '.StartLine // 1')
+
+            echo "$(
+              jq -n --arg ruleId "$rule_id" \
+                    --arg type "VULNERABILITY" \
+                    --arg severity "MAJOR" \
+                    --arg message "$desc" \
+                    --arg filePath "$file" \
+                    --argjson startLine "$start_line" \
+              '{
+                engineId: "gitleaks",
+                ruleId: $ruleId,
+                type: $type,
+                severity: $severity,
+                primaryLocation: {
+                  message: $message,
+                  filePath: $filePath,
+                  textRange: {
+                    startLine: $startLine,
+                    endLine: $startLine
+                  }
                 }
-              }
-            }
-            EOF
-                done | jq -s '.' > sonar-gitleaks-report.json
+              }'
+            )"
+          done | jq -s '.' > sonar-gitleaks-report.json
+
 
 
       # Run SonarQube Scan
@@ -93,7 +101,7 @@ jobs:
             -Dsonar.dependencyCheck.jsonReportPath=dependency-check-report.json
             -Dsonar.python.coverage.reportPaths=coverage-report/cobertura.xml
             -Dsonar.coverageReportPaths=coverage-report/coverage.xml
-            -Dsonar.externalIssuesReportPaths=gitleaks-report.json
+            -Dsonar.externalIssuesReportPaths=sonar-gitleaks-report.json
             -X
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_HEALTH_TOKEN }}
