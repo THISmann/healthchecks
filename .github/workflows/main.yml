@@ -101,8 +101,9 @@ jobs:
             -Dsonar.dependencyCheck.jsonReportPath=dependency-check-report.json
             -Dsonar.python.coverage.reportPaths=coverage-report/cobertura.xml
             -Dsonar.coverageReportPaths=coverage-report/coverage.xml
-            -Dsonar.externalIssuesReportPaths=sonar-gitleaks-report.json
             -X
+        
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_HEALTH_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+    # -Dsonar.externalIssuesReportPaths=sonar-gitleaks-report.json
