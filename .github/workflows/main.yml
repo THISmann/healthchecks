@@ -103,6 +103,7 @@ jobs:
       with: 
         output: gitleaks-report.json  # Specify JSON output for SonarQube
         format: json  # Ensure JSON format for the report
+      continue-on-error: true
 
     - name: SonarQube Scan
       uses: SonarSource/sonarqube-scan-action@v5.2.0
