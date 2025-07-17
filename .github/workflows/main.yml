@@ -87,6 +87,7 @@ jobs:
     
     - name: Run JaCoCo Test Coverage
       run: |
+        cd backend # Adjust to the directory containing pom.xml, if needed
         mvn test -B -Pcoverage
         mvn jacoco:report
       env:
@@ -100,7 +101,8 @@ jobs:
           -Dsonar.projectKey=healthCheck
           -Dsonar.python.bandit.reportPaths=bandit-report.json
           -Dsonar.dependencyCheck.jsonReportPath=dependency-check-report.json
-          -Dsonar.python.coverage.reportPaths=coverage-report/cobertura.xml 
+          -Dsonar.python.coverage.reportPaths=coverage-report/cobertura.xml
+          -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
           -X
       #  -Dsonar.externalIssuesReportPaths=gitleaks-report.sarif,pip-audit-report.sarif
         
