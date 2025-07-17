@@ -97,13 +97,30 @@ jobs:
 
     # Run Gitleaks to detect secrets and generate a JSON report
     - name: Run Gitleaks
-      uses: gitleaks/gitleaks-action@v2
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITLEAKS_TOKEN }}
-      with: 
-        output: gitleaks-report.json  # Specify JSON output for SonarQube
-        format: json  # Ensure JSON format for the report
-      continue-on-error: true
+      run: |
+        curl -sSL https://github.com/gitleaks/gitleaks/releases/latest/download/gitleaks-linux-amd64 -o gitleaks
+        chmod +x gitleaks
+        ./gitleaks detect --source . --report-format json --report-path gitleaks-report.json || true
+
+    - name: Convert Gitleaks report to SonarQube generic format
+      run: |
+        pip install jq
+        jq -r '
+          .[] | {
+            engineId: "gitleaks",
+            ruleId: .ruleID,
+            type: "VULNERABILITY",
+            severity: "MAJOR",
+            primaryLocation: {
+              message: .description,
+              filePath: .file,
+              textRange: {
+                startLine: .startLine,
+                endLine: .startLine
+              }
+            }
+          }
+        ' gitleaks-report.json > sonar-gitleaks-report.json
 
     - name: SonarQube Scan
       uses: SonarSource/sonarqube-scan-action@v5.2.0
@@ -114,11 +131,12 @@ jobs:
           -Dsonar.python.bandit.reportPaths=bandit-report.json
           -Dsonar.dependencyCheck.jsonReportPath=dependency-check-report.json
           -Dsonar.python.coverage.reportPaths=coverage-report/cobertura.xml
-          -Dsonar.secretsDetection.reportPaths=gitleaks-report.json
+          -Dsonar.externalIssuesReportPaths=sonar-gitleaks-report.json
           -X
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_HEALTH_TOKEN }}
         SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
     # - name: Run Trivy Vulnerability Scan
     #   run: |
     #     trivy image --exit-code 1 --severity HIGH,CRITICAL ekila-streams
