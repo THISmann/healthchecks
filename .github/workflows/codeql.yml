@@ -65,8 +65,8 @@ jobs:
     # This includes steps like installing compilers or runtimes (`actions/setup-node`
     # or others). This is typically only required for manual builds.
     # - name: Setup runtime (example)
-    #   uses: actions/setup-example@v1
-
+    #   uses: actions/setup-example@v1 --- bonjour voici 
+ 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v3
