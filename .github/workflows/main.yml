@@ -87,12 +87,6 @@ jobs:
     
     - name: Run JaCoCo Test Coverage
       run: |
-        # Verify if the backend directory exists, and adjust as needed
-        if [ -d "backend" ]; then
-          cd backend
-        else
-          echo "Directory 'backend' not found, running in current directory"
-        fi
         mvn test -B -Pcoverage
         mvn jacoco:report
       shell: bash
@@ -110,7 +104,7 @@ jobs:
           -Dsonar.python.bandit.reportPaths=bandit-report.json
           -Dsonar.dependencyCheck.jsonReportPath=dependency-check-report.json
           -Dsonar.python.coverage.reportPaths=coverage-report/cobertura.xml
-          -Dsonar.coverage.jacoco.xmlReportPaths=backend/target/site/jacoco/jacoco.xml
+          -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
           -X
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_HEALTH_TOKEN }}
