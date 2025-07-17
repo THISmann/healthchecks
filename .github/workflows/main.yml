@@ -87,25 +87,31 @@ jobs:
     
     - name: Run JaCoCo Test Coverage
       run: |
-        cd backend # Adjust to the directory containing pom.xml, if needed
+        # Verify if the backend directory exists, and adjust as needed
+        if [ -d "backend" ]; then
+          cd backend
+        else
+          echo "Directory 'backend' not found, running in current directory"
+        fi
         mvn test -B -Pcoverage
         mvn jacoco:report
+      shell: bash
       env:
-        MAVEN_OPTS: "-Xmx512m"
+        JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.15-6/x64
+        JAVA_HOME_17_X64: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.15-6/x64
+        MAVEN_OPTS: -Xmx512m
 
     - name: SonarQube Scan
       uses: SonarSource/sonarqube-scan-action@v5.2.0
       with:
         projectBaseDir: .
-        args: > 
+        args: >
           -Dsonar.projectKey=healthCheck
           -Dsonar.python.bandit.reportPaths=bandit-report.json
           -Dsonar.dependencyCheck.jsonReportPath=dependency-check-report.json
           -Dsonar.python.coverage.reportPaths=coverage-report/cobertura.xml
-          -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+          -Dsonar.coverage.jacoco.xmlReportPaths=backend/target/site/jacoco/jacoco.xml
           -X
-      #  -Dsonar.externalIssuesReportPaths=gitleaks-report.sarif,pip-audit-report.sarif
-        
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_HEALTH_TOKEN }}
         SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
