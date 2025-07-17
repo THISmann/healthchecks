@@ -1,0 +1,154 @@
+name: Django CI
+
+on:
+  push:
+    branches: [ "main", "rostbranch" ]
+  pull_request:
+    branches: [ "main", "rostbranch" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 4
+      matrix:
+        python-version: [3.9]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v3
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: List Docker Images
+      run: docker images
+
+    - name: Set up JDK
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17' # Adjust based on your project requirements
+        distribution: 'temurin'
+
+    # - name: Run Gitleaks
+    #   uses: gitleaks/gitleaks-action@v2
+    #   with:
+    #     config-path: .gitleaks.toml
+    #   continue-on-error: true
+
+    # - name: Install kcov and dependencies
+    #   run: |
+    #     sudo apt-get update
+    #     sudo apt-get install -y kcov
+    #     pip install coverage
+    #   continue-on-error: true
+
+    # - name: Run tests with coverage and kcov
+    #   run: |
+    #     coverage run --source=. manage.py test
+    #     kcov --include-path=$GITHUB_WORKSPACE coverage-report coverage run --source=. manage.py test || echo "kcov failed to generate coverage"
+    #   continue-on-error: true
+
+    # - name: Run pip-audit
+    #   run: |
+    #     pip install pip-audit
+    #     pip-audit --output pip-audit-report.json || echo "pip-audit found issues"
+    #   continue-on-error: true
+
+    # - name: Run Safety Check
+    #   run: |
+    #     pip install safety
+    #     safety check --full-report --output json > safety-report.json || echo "Safety found issues"
+    #   continue-on-error: true
+
+    # - name: Run OWASP Dependency-Check
+    #   uses: dependency-check/Dependency-Check_Action@main
+    #   with:
+    #     project: DjangoApp
+    #     path: .
+    #     format: JSON
+    #     out: dependency-check-report.json
+    #   env:
+    #     JAVA_HOME: /opt/jdk
+    #   continue-on-error: true
+
+    # - name: Run CycloneDX Python
+    #   run: |
+    #     pip install cyclonedx-bom
+    #     cyclonedx-py requirements -i requirements.txt -o bom.xml || echo "CycloneDX failed to generate SBOM"
+    #   continue-on-error: true
+
+    - name: Run Bandit
+      run: |
+        pip install bandit
+        bandit --format json --output $GITHUB_WORKSPACE/bandit-report.json --recursive $GITHUB_WORKSPACE/ || echo
+    
+    # - name: Run JaCoCo Test Coverage
+    #   run: |
+    #     mvn test -B -Pcoverage
+    #     mvn jacoco:report
+    #   shell: bash
+    #   env:
+    #     JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.15-6/x64
+    #     JAVA_HOME_17_X64: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.15-6/x64
+    #     MAVEN_OPTS: -Xmx512m
+
+    # Run Gitleaks to detect secrets and generate a JSON report
+    - name: Run Gitleaks Scan
+      uses: gitleaks/gitleaks-action@v2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITLEAKS_TOKEN }}
+      continue-on-error: true
+        
+
+    - name: SonarQube Scan
+      uses: SonarSource/sonarqube-scan-action@v5.2.0
+      with:
+        projectBaseDir: .
+        args: >
+          -Dsonar.projectKey=healthCheck
+          -Dsonar.python.bandit.reportPaths=bandit-report.json
+          -Dsonar.dependencyCheck.jsonReportPath=dependency-check-report.json
+          -Dsonar.python.coverage.reportPaths=coverage-report/cobertura.xml
+          -Dsonar.secretsDetection.reportPaths=gitleaks-report.json
+          -X
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_HEALTH_TOKEN }}
+        SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+    # - name: Run Trivy Vulnerability Scan
+    #   run: |
+    #     trivy image --exit-code 1 --severity HIGH,CRITICAL ekila-streams
+    #   # Replace 'ekila-streams' with the actual image name from your docker-compose.yml.
+    #   # --exit-code 1 makes the step fail if HIGH or CRITICAL vulnerabilities are found.
+    #   # Adjust severity levels (e.g., MEDIUM,LOW) as needed.
+
+
+  # name: Build
+
+  # on:
+  # push:
+  #   branches:
+  #     - main
+
+  #bonjour 
+
+  # jobs:
+  # build:
+  #   name: Build
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #       with:
+  #         fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+  #     - uses: sonarsource/sonarqube-scan-action@master
+  #       env:
+  #         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  #         SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+  #     # If you wish to fail your job when the Quality Gate is red, uncomment the
+  #     # following lines. This would typically be used to fail a deployment.
+  #     # - uses: sonarsource/sonarqube-quality-gate-action@master
+  #     #   timeout-minutes: 5
+  #     #   env:
+  #     #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
